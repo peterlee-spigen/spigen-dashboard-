@@ -1,0 +1,27 @@
+[
+  {
+    "time": "12:09:32",
+    "user": "seungwonan",
+    "prompt": "안녕"
+  },
+  {
+    "time": "12:11:02",
+    "user": "seungwonan",
+    "prompt": "@data  업로드 시 에러\n\nRuntime TypeError\nNotAllowedError: Failed to execute 'writeText' on 'Clipboard': Write permission denied.\n\n\nCannot read properties of undefined (reading 'toLocaleString')\nCall Stack\n15\n\n<unknown>\nfile:///Users/seungwonan/Dev/260512-%E1%84%89%E1%85%B2%E1%84%91%E1%85%B5%E1%84%80%E1%85%A6%E1%86%AB/.next/dev/static/chunks/src_app_upload_page_tsx_10v96au._.js (200:49)\nArray.map\n<anonymous>\nUploadPage\nfile:///Users/seungwonan/Dev/260512-%E1%84%89%E1%85%B2%E1%84%91%E1%85%B5%E1%84%80%E1%85%A6%E1%86%AB/.next/dev/static/chunks/src_app_upload_page_tsx_10v96au._.js (158:29)\nObject.react_stack_bottom_frame\nfile:///Users/seungwonan/Dev/260512-%E1%84%89%E1%85%B2%E1%84%91%E1%85%B5%E1%84%80%E1%85%A6%E1%86%AB/.next/dev/static/chunks/0z~i_next_dist_compiled_react-dom_0-pjtxe._.js (15037:24)\nrenderWithHooks\nfile:///Users/seungwonan/Dev/260512-%E1%84%89%E1%85%B2%E1%84%91%E1%85%B5%E1%84%80%E1%85%A6%E1%86%AB/.next/dev/static/chunks/0z~i_next_dist_compiled_react-dom_0-pjtxe._.js (4620:24)\nupdateFunctionComponent\nfile:///Users/seungwonan/Dev/260512-%E1%84%89%E1%85%B2%E1%84%91%E1%85%B5%E1%84%80%E1%85%A6%E1%86%AB/.next/dev/static/chunks/0z~i_next_dist_compiled_react-dom_0-pjtxe._.js (6081:21)\nbeginWork\nfile:///Users/seungwonan/Dev/260512-%E1%84%89%E1%85%B2%E1%84%91%E1%85%B5%E1%84%80%E1%85%A6%E1%86%AB/.next/dev/static/chunks/0z~i_next_dist_compiled_react-dom_0-pjtxe._.js (6691:24)\nrunWithFiberInDEV\nfile:///Users/seungwonan/Dev/260512-%E1%84%89%E1%85%B2%E1%84%91%E1%85%B5%E1%84%80%E1%85%A6%E1%86%AB/.next/dev/static/chunks/0z~i_next_dist_compiled_react-dom_0-pjtxe._.js (965:74)\nperformUnitOfWork\nfile:///Users/seungwonan/Dev/260512-%E1%84%89%E1%85%B2%E1%84%91%E1%85%B5%E1%84%80%E1%85%A6%E1%86%AB/.next/dev/static/chunks/0z~i_next_dist_compiled_react-dom_0-pjtxe._.js (9555:97)\nworkLoopSync\nfile:///Users/seungwonan/Dev/260512-%E1%84%89%E1%85%B2%E1%84%91%E1%85%B5%E1%84%80%E1%85%A6%E1%86%AB/.next/dev/static/chunks/0z~i_next_dist_compiled_react-dom_0-pjtxe._.js (9449:40)\nrenderRootSync\nfile:///Users/seungwonan/Dev/260512-%E1%84%89%E1%85%B2%E1%84%91%E1%85%B5%E1%84%80%E1%85%A6%E1%86%AB/.next/dev/static/chunks/0z~i_next_dist_compiled_react-dom_0-pjtxe._.js (9433:13)\nperformWorkOnRoot\nfile:///Users/seungwonan/Dev/260512-%E1%84%89%E1%85%B2%E1%84%91%E1%85%B5%E1%84%80%E1%85%A6%E1%86%AB/.next/dev/static/chunks/0z~i_next_dist_compiled_react-dom_0-pjtxe._.js (9098:47)\nperformWorkOnRootViaSchedulerTask\nfile:///Users/seungwonan/Dev/260512-%E1%84%89%E1%85%B2%E1%84%91%E1%85%B5%E1%84%80%E1%85%A6%E1%86%AB/.next/dev/static/chunks/0z~i_next_dist_compiled_react-dom_0-pjtxe._.js (10255:9)\nMessagePort.performWorkUntilDeadline\nfile:///Users/seungwonan/Dev/260512-%E1%84%89%E1%85%B2%E1%84%91%E1%85%B5%E1%84%80%E1%85%A6%E1%86%AB/.next/dev/static/chunks/0z~i_next_dist_compiled_0fds868._.js (2647:64)\nClientPageRoot\nfile:///Users/seungwonan/Dev/260512-%E1%84%89%E1%85%B2%E1%84%91%E1%85%B5%E1%84%80%E1%85%A6%E1%86%AB/.next/dev/static/chunks/node_modules__pnpm_0-d-5ba._.js (5411:"
+  },
+  {
+    "time": "12:12:00",
+    "user": "seungwonan",
+    "prompt": "zocoding_attribution_sample.csvError: Could not locate the bindings file. Tried: → /Users/seungwonan/Dev/260512-슈피겐/node_modules/.pnpm/better-sqlite3@12.9.0/node_modules/better-sqlite3/build/better_sqlite3.node → /Users/seungwonan/Dev/260512-슈피겐/node_modules/.pnpm/better-sqlite3@12.9.0/node_modules/better-sqlite3/build/Debug/better_sqlite3.node → /Users/seungwonan/Dev/260512-슈피겐/node_modules/.pnpm/better-sqlite3@12.9.0/node_modules/better-sqlite3/build/Release/better_sqlite3.node → /Users/seungwonan/Dev/260512-슈피겐/node_modules/.pnpm/better-sqlite3@12.9.0/node_modules/better-sqlite3/out/Debug/better_sqlite3.node → /Users/seungwonan/Dev/260512-슈피겐/node_modules/.pnpm/better-sqlite3@12.9.0/node_modules/better-sqlite3/Debug/better_sqlite3.node → /Users/seungwonan/Dev/260512-슈피겐/node_modules/.pnpm/better-sqlite3@12.9.0/node_modules/better-sqlite3/out/Release/better_sqlite3.node → /Users/seungwonan/Dev/260512-슈피겐/node_modules/.pnpm/better-sqlite3@12.9.0/node_modules/better-sqlite3/Release/better_sqlite3.node → /Users/seungwonan/Dev/260512-슈피겐/node_modules/.pnpm/better-sqlite3@12.9.0/node_modules/better-sqlite3/build/default/better_sqlite3.node → /Users/seungwonan/Dev/260512-슈피겐/node_modules/.pnpm/better-sqlite3@12.9.0/node_modules/better-sqlite3/compiled/24.15.0/darwin/arm64/better_sqlite3.node → /Users/seungwonan/Dev/260512-슈피겐/node_modules/.pnpm/better-sqlite3@12.9.0/node_modules/better-sqlite3/addon-build/release/install-root/better_sqlite3.node → /Users/seungwonan/Dev/260512-슈피겐/node_modules/.pnpm/better-sqlite3@12.9.0/node_modules/better-sqlite3/addon-build/debug/install-root/better_sqlite3.node → /Users/seungwonan/Dev/260512-슈피겐/node_modules/.pnpm/better-sqlite3@12.9.0/node_modules/better-sqlite3/addon-build/default/install-root/better_sqlite3.node → /Users/seungwonan/Dev/260512-슈피겐/node_modules/.pnpm/better-sqlite3@12.9.0/node_modules/better-sqlite3/lib/binding/node-v137-darwin-arm64/better_sqlite3.node"
+  },
+  {
+    "time": "12:12:17",
+    "user": "seungwonan",
+    "prompt": "로컬 스토리지로 싹다 변경해줘 로컬 DB 말고"
+  },
+  {
+    "time": "14:27:00",
+    "user": "seungwonan",
+    "prompt": "현재 프로젝트 깃으로 초기화, 깃허브에 레포 만들어서 거기에 올려줘"
+  }
+]
