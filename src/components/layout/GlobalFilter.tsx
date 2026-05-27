@@ -1,7 +1,7 @@
 "use client";
 import { useFilterStore, DATE_PRESETS, AdType, CampaignStatus } from "@/store/filter-store";
 
-export default function GlobalFilter() {
+export default function GlobalFilter({ children }: { children?: React.ReactNode }) {
   const { dateFrom, dateTo, adTypes, campaignStatus, asinQuery,
     setDateRange, toggleAdType, setCampaignStatus, setAsinQuery } = useFilterStore();
 
@@ -73,6 +73,8 @@ export default function GlobalFilter() {
         onChange={(e) => setAsinQuery(e.target.value)}
         className="border border-neutral-300 dark:border-neutral-600 rounded px-2 py-1 text-xs bg-white dark:bg-neutral-800 w-44"
       />
+
+      {children && <div className="ml-auto">{children}</div>}
     </div>
   );
 }

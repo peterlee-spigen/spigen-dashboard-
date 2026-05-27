@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/layout/Sidebar";
-import GlobalFilter from "@/components/layout/GlobalFilter";
-import FilterStoreInitializer from "@/components/layout/FilterStoreInitializer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,13 +27,8 @@ export default function RootLayout({
       lang="ko"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex bg-neutral-50 dark:bg-neutral-950">
-        <FilterStoreInitializer />
-        <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0">
-          <GlobalFilter />
-          <main className="flex-1 overflow-auto">{children}</main>
-        </div>
+      <body className="min-h-full bg-neutral-50 dark:bg-neutral-950">
+        {children}
       </body>
     </html>
   );
