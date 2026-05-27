@@ -12,7 +12,7 @@ const NAV = [
   { href: "/upload", label: "데이터 업로드", icon: "▲" },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ userEmail }: { userEmail?: string }) {
   const pathname = usePathname();
 
   return (
@@ -40,8 +40,26 @@ export default function Sidebar() {
           );
         })}
       </nav>
-      <div className="px-5 py-3 border-t border-neutral-700 text-xs text-neutral-500">
-        통화: EUR
+
+      <div className="border-t border-neutral-700">
+        {userEmail && (
+          <Link
+            href="/mypage"
+            className={`flex items-center gap-2.5 px-4 py-3 transition-colors ${
+              pathname === "/mypage"
+                ? "bg-blue-600 text-white"
+                : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
+            }`}
+          >
+            <span className="w-6 h-6 rounded-full bg-neutral-600 flex items-center justify-center text-xs font-semibold shrink-0 uppercase">
+              {userEmail[0]}
+            </span>
+            <span className="text-xs truncate">{userEmail}</span>
+          </Link>
+        )}
+        <div className="px-5 py-2 text-xs text-neutral-500">
+          통화: EUR
+        </div>
       </div>
     </aside>
   );
