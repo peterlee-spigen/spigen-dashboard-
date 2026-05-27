@@ -1,4 +1,5 @@
 import { getTable } from "@/lib/local-store";
+import { calcDelta } from "@/lib/date-utils";
 
 export interface TrafficTrendRow {
   date: string;
@@ -90,4 +91,44 @@ export async function getLowBuyBoxAsins(dateFrom: string, dateTo: string, thresh
   const result = aggregateByAsin(rows).filter((r) => r.buy_box_percentage < threshold);
   result.sort((a, b) => a.buy_box_percentage - b.buy_box_percentage);
   return result;
+}
+
+export interface TrafficKpis {
+  sessions: number;
+  pageViews: number;
+  avgBuyBox: number | null;
+  deltas: { sessions: number | null; pageViews: number | null; avgBuyBox: number | null } | null;
+}
+
+function aggregateTrafficKpis(rows: TrafficStored[]) {
+  const sessions = rows.reduce((s, r) => s + (r.sessions_total ?? 0), 0);
+  const pageViews = rows.reduce((s, r) => s + (r.page_views_total ?? 0), 0);
+  const avgBuyBox = rows.length > 0
+    ? rows.reduce((s, r) => s + (r.buy_box_percentage ?? 0), 0) / rows.length
+    : null;
+  return { sessions, pageViews, avgBuyBox };
+}
+
+export async function getTrafficKpis(
+  dateFrom: string,
+  dateTo: string,
+  prevFrom?: string,
+  prevTo?: string,
+): Promise<TrafficKpis> {
+  const all = await getTable<TrafficStored>("traffic");
+  const cur = aggregateTrafficKpis(all.filter((r) => inRange(r.report_date, dateFrom, dateTo)));
+
+  let deltas: TrafficKpis["deltas"] = null;
+  if (prevFrom && prevTo) {
+    const prev = aggregateTrafficKpis(all.filter((r) => inRange(r.report_date, prevFrom, prevTo)));
+    deltas = {
+      sessions: calcDelta(cur.sessions, prev.sessions),
+      pageViews: calcDelta(cur.pageViews, prev.pageViews),
+      avgBuyBox: cur.avgBuyBox !== null && prev.avgBuyBox !== null
+        ? calcDelta(cur.avgBuyBox, prev.avgBuyBox)
+        : null,
+    };
+  }
+
+  return { ...cur, deltas };
 }

@@ -1,5 +1,6 @@
 import { getTable } from "@/lib/local-store";
 import { getLatestReportDate } from "@/lib/queries/inventory";
+import { calcDelta } from "@/lib/date-utils";
 
 export interface ProductRow {
   asin: string;
@@ -103,6 +104,52 @@ export async function getProducts(dateFrom: string, dateTo: string, asin?: strin
 
   result.sort((a, b) => b.revenue - a.revenue);
   return result;
+}
+
+export interface ProductKpis {
+  totalUnits: number;
+  totalRevenue: number;
+  avgBuyBox: number | null;
+  deltas: { totalUnits: number | null; totalRevenue: number | null; avgBuyBox: number | null } | null;
+}
+
+function aggregateProductKpis(allOrders: OrderStored[], allTraffic: TrafficStored[], from: string, to: string) {
+  const orders = allOrders.filter((o) => inRange(o.purchase_date, from, to));
+  const traffic = allTraffic.filter((r) => inRange(r.report_date, from, to));
+  const totalUnits = orders.reduce((s, o) => s + (o.quantity ?? 0), 0);
+  const totalRevenue = orders.reduce((s, o) => s + (o.item_price ?? 0) * (o.quantity ?? 0), 0);
+  const avgBuyBox = traffic.length > 0
+    ? traffic.reduce((s, r) => s + (r.buy_box_percentage ?? 0), 0) / traffic.length
+    : null;
+  return { totalUnits, totalRevenue, avgBuyBox };
+}
+
+export async function getProductKpis(
+  dateFrom: string,
+  dateTo: string,
+  prevFrom?: string,
+  prevTo?: string,
+): Promise<ProductKpis> {
+  const [allOrders, allTraffic] = await Promise.all([
+    getTable<OrderStored>("orders"),
+    getTable<TrafficStored>("traffic"),
+  ]);
+
+  const cur = aggregateProductKpis(allOrders, allTraffic, dateFrom, dateTo);
+
+  let deltas: ProductKpis["deltas"] = null;
+  if (prevFrom && prevTo) {
+    const prev = aggregateProductKpis(allOrders, allTraffic, prevFrom, prevTo);
+    deltas = {
+      totalUnits: calcDelta(cur.totalUnits, prev.totalUnits),
+      totalRevenue: calcDelta(cur.totalRevenue, prev.totalRevenue),
+      avgBuyBox: cur.avgBuyBox !== null && prev.avgBuyBox !== null
+        ? calcDelta(cur.avgBuyBox, prev.avgBuyBox)
+        : null,
+    };
+  }
+
+  return { ...cur, deltas };
 }
 
 export async function getProductDetail(asin: string, dateFrom: string, dateTo: string): Promise<ProductDetail> {

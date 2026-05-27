@@ -3,22 +3,28 @@ import { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import DataTable, { Column } from "@/components/tables/DataTable";
 import { useFilterStore } from "@/store/filter-store";
-import { getTrafficTrend, getLowBuyBoxAsins, type TrafficTrendRow as TrafficTrend, type TrafficAsinRow as TrafficAsin } from "@/lib/queries/traffic";
+import { getTrafficTrend, getLowBuyBoxAsins, getTrafficKpis, type TrafficTrendRow as TrafficTrend, type TrafficAsinRow as TrafficAsin, type TrafficKpis } from "@/lib/queries/traffic";
+import KpiCard from "@/components/cards/KpiCard";
 
 export default function TrafficPage() {
-  const { dateFrom, dateTo } = useFilterStore();
+  const { dateFrom, dateTo, prevDateFrom, prevDateTo } = useFilterStore();
   const [trend, setTrend] = useState<TrafficTrend[]>([]);
   const [lowBuyBox, setLowBuyBox] = useState<TrafficAsin[]>([]);
+  const [kpis, setKpis] = useState<TrafficKpis | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    Promise.all([getTrafficTrend(dateFrom, dateTo), getLowBuyBoxAsins(dateFrom, dateTo)])
-      .then(([trend, low]) => { if (!cancelled) { setTrend(trend); setLowBuyBox(low); setLoading(false); } })
-      .catch(() => { if (!cancelled) { setTrend([]); setLowBuyBox([]); setLoading(false); } });
+    Promise.all([
+      getTrafficTrend(dateFrom, dateTo),
+      getLowBuyBoxAsins(dateFrom, dateTo),
+      getTrafficKpis(dateFrom, dateTo, prevDateFrom, prevDateTo),
+    ])
+      .then(([trend, low, kpis]) => { if (!cancelled) { setTrend(trend); setLowBuyBox(low); setKpis(kpis); setLoading(false); } })
+      .catch(() => { if (!cancelled) { setTrend([]); setLowBuyBox([]); setKpis(null); setLoading(false); } });
     return () => { cancelled = true; };
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, prevDateFrom, prevDateTo]);
 
   const asinCols: Column<TrafficAsin>[] = [
     { key: "child_asin", header: "ASIN", render: r => <span className="font-mono text-xs">{r.child_asin}</span> },
@@ -39,6 +45,26 @@ export default function TrafficPage() {
   return (
     <div className="p-6 space-y-5">
       <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50">트래픽 분석</h1>
+
+      {/* KPI 요약 */}
+      <div className="grid grid-cols-3 gap-4">
+        <KpiCard
+          label="총 세션"
+          value={kpis ? kpis.sessions.toLocaleString("de-DE") : null}
+          delta={kpis?.deltas?.sessions}
+        />
+        <KpiCard
+          label="총 페이지뷰"
+          value={kpis ? kpis.pageViews.toLocaleString("de-DE") : null}
+          delta={kpis?.deltas?.pageViews}
+        />
+        <KpiCard
+          label="평균 Buy Box"
+          value={kpis?.avgBuyBox !== null && kpis?.avgBuyBox !== undefined ? kpis.avgBuyBox.toFixed(1) : null}
+          unit="%"
+          delta={kpis?.deltas?.avgBuyBox}
+        />
+      </div>
 
       <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl p-5">
         <h2 className="text-sm font-semibold mb-4 text-neutral-700 dark:text-neutral-200">일별 세션 / 페이지뷰 추세</h2>

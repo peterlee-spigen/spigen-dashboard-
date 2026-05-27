@@ -5,6 +5,7 @@ import {
   CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import KpiCard from "@/components/cards/KpiCard";
+import InventoryRiskBanner from "@/components/cards/InventoryRiskBanner";
 import { useFilterStore } from "@/store/filter-store";
 import { getSummary, type SummaryData } from "@/lib/queries/summary";
 
@@ -14,14 +15,14 @@ function fmt(n: number | null, digits = 0) {
 }
 
 export default function SummaryPage() {
-  const { dateFrom, dateTo, adTypes } = useFilterStore();
+  const { dateFrom, dateTo, prevDateFrom, prevDateTo, adTypes } = useFilterStore();
   const [data, setData] = useState<SummaryData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    getSummary(dateFrom, dateTo)
+    getSummary(dateFrom, dateTo, prevDateFrom, prevDateTo)
       .then((d) => { if (!cancelled) { setData(d); setLoading(false); } })
       .catch(() => { if (!cancelled) { setData(null); setLoading(false); } });
     return () => { cancelled = true; };
@@ -39,14 +40,16 @@ export default function SummaryPage() {
     <div className="p-6 space-y-6">
       <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50">Executive Summary</h1>
 
+      <InventoryRiskBanner />
+
       {/* KPI 카드 */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        <KpiCard label="총 매출" value={fmt(data.totalRevenue, 2)} unit="EUR" highlight />
-        <KpiCard label="총 광고비" value={fmt(data.totalAdSpend, 2)} unit="EUR" />
-        <KpiCard label="통합 ROAS" value={fmt(data.roas, 2)} sub="SP 14d 기준" />
-        <KpiCard label="총 클릭" value={fmt(data.totalClicks)} />
-        <KpiCard label="평균 CTR" value={data.avgCtr !== null ? fmt(data.avgCtr, 2) : null} unit="%" />
-        <KpiCard label="평균 Buy Box" value={data.avgBuyBox !== null ? fmt(data.avgBuyBox, 1) : null} unit="%" />
+        <KpiCard label="총 매출" value={fmt(data.totalRevenue, 2)} unit="EUR" highlight delta={data.deltas?.revenue} />
+        <KpiCard label="총 광고비" value={fmt(data.totalAdSpend, 2)} unit="EUR" delta={data.deltas?.adSpend} />
+        <KpiCard label="통합 ROAS" value={fmt(data.roas, 2)} sub="SP 14d 기준" delta={data.deltas?.roas} />
+        <KpiCard label="총 클릭" value={fmt(data.totalClicks)} delta={data.deltas?.clicks} />
+        <KpiCard label="평균 CTR" value={data.avgCtr !== null ? fmt(data.avgCtr, 2) : null} unit="%" delta={data.deltas?.ctr} />
+        <KpiCard label="평균 Buy Box" value={data.avgBuyBox !== null ? fmt(data.avgBuyBox, 1) : null} unit="%" delta={data.deltas?.buyBox} />
       </div>
 
       {/* 매출 vs 광고비 추세 */}

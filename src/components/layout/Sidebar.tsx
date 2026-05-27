@@ -8,6 +8,7 @@ const NAV = [
   { href: "/products", label: "상품 성과", icon: "◉" },
   { href: "/inventory", label: "재고 관리", icon: "▣" },
   { href: "/traffic", label: "트래픽 분석", icon: "◎" },
+  { href: "/orders", label: "주문 분석", icon: "◐" },
   { href: "/upload", label: "데이터 업로드", icon: "▲" },
 ];
 

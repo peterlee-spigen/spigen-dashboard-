@@ -97,3 +97,29 @@ export async function getLatestReportDate(): Promise<string | null> {
   for (const r of rows) if (r.report_date > max) max = r.report_date;
   return max;
 }
+
+export interface RiskAlertItem {
+  asin: string;
+  sku: string;
+  product_name: string;
+  afn_fulfillable: number;
+  risk_days: number | null;
+  risk_level: "warning" | "danger";
+}
+
+export async function getRiskAlertItems(): Promise<{ items: RiskAlertItem[]; reportDate: string | null }> {
+  const reportDate = await getLatestReportDate();
+  if (!reportDate) return { items: [], reportDate: null };
+  const all = await getInventory(reportDate);
+  const items = all
+    .filter((r) => r.risk_level !== "ok")
+    .map((r) => ({
+      asin: r.asin,
+      sku: r.sku,
+      product_name: r.product_name,
+      afn_fulfillable: r.afn_fulfillable,
+      risk_days: r.risk_days,
+      risk_level: r.risk_level as "warning" | "danger",
+    }));
+  return { items, reportDate };
+}

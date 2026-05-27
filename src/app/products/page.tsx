@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import DataTable, { Column } from "@/components/tables/DataTable";
 import { useFilterStore } from "@/store/filter-store";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { getProducts, getProductDetail, type ProductRow, type ProductDetail } from "@/lib/queries/products";
+import { getProducts, getProductDetail, getProductKpis, type ProductRow, type ProductDetail, type ProductKpis } from "@/lib/queries/products";
+import KpiCard from "@/components/cards/KpiCard";
 
 function eur(n: number) { return `€${n.toLocaleString("de-DE", { maximumFractionDigits: 2 })}`; }
 
@@ -15,8 +16,9 @@ function RiskBadge({ days }: { days: number | null }) {
 }
 
 export default function ProductsPage() {
-  const { dateFrom, dateTo, asinQuery } = useFilterStore();
+  const { dateFrom, dateTo, prevDateFrom, prevDateTo, asinQuery } = useFilterStore();
   const [rows, setRows] = useState<ProductRow[]>([]);
+  const [kpis, setKpis] = useState<ProductKpis | null>(null);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [detail, setDetail] = useState<ProductDetail | null>(null);
@@ -24,11 +26,14 @@ export default function ProductsPage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    getProducts(dateFrom, dateTo, asinQuery || undefined)
-      .then((d) => { if (!cancelled) { setRows(d); setLoading(false); } })
-      .catch(() => { if (!cancelled) { setRows([]); setLoading(false); } });
+    Promise.all([
+      getProducts(dateFrom, dateTo, asinQuery || undefined),
+      getProductKpis(dateFrom, dateTo, prevDateFrom, prevDateTo),
+    ])
+      .then(([d, k]) => { if (!cancelled) { setRows(d); setKpis(k); setLoading(false); } })
+      .catch(() => { if (!cancelled) { setRows([]); setKpis(null); setLoading(false); } });
     return () => { cancelled = true; };
-  }, [dateFrom, dateTo, asinQuery]);
+  }, [dateFrom, dateTo, prevDateFrom, prevDateTo, asinQuery]);
 
   useEffect(() => {
     if (!selected) { setDetail(null); return; }
@@ -55,6 +60,29 @@ export default function ProductsPage() {
   return (
     <div className="p-6 space-y-4">
       <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50">상품 성과 분석</h1>
+
+      {/* KPI 요약 */}
+      <div className="grid grid-cols-3 gap-4">
+        <KpiCard
+          label="총 판매 수량"
+          value={kpis ? kpis.totalUnits.toLocaleString("de-DE") : null}
+          unit="개"
+          delta={kpis?.deltas?.totalUnits}
+        />
+        <KpiCard
+          label="총 매출"
+          value={kpis ? `€${kpis.totalRevenue.toLocaleString("de-DE", { maximumFractionDigits: 2 })}` : null}
+          delta={kpis?.deltas?.totalRevenue}
+          highlight
+        />
+        <KpiCard
+          label="평균 Buy Box"
+          value={kpis?.avgBuyBox !== null && kpis?.avgBuyBox !== undefined ? kpis.avgBuyBox.toFixed(1) : null}
+          unit="%"
+          delta={kpis?.deltas?.avgBuyBox}
+        />
+      </div>
+
       <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl overflow-hidden">
         {loading ? <div className="p-8 text-center text-neutral-400">로딩 중...</div> : (
           <DataTable
