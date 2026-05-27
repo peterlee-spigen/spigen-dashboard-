@@ -17,10 +17,22 @@ export default function LoginPage() {
 
   const supabase = createClient();
 
+  function checkDomain(email: string): boolean {
+    const domain = email.split("@")[1]?.toLowerCase();
+    if (domain !== "spigen.com") {
+      setMessage({ type: "error", text: "@spigen.com 이메일 주소만 사용할 수 있습니다." });
+      setLoading(false);
+      return false;
+    }
+    return true;
+  }
+
   async function handlePasswordAuth(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
+
+    if (!checkDomain(email)) return;
 
     if (mode === "signin") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -54,6 +66,8 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
+
+    if (!checkDomain(email)) return;
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
