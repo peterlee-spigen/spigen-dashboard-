@@ -17,11 +17,12 @@ const SHEETS = [
 ]
 
 export async function POST(req: NextRequest) {
-  // Vercel Cron 또는 수동 호출 모두 허용 (SYNC_SECRET이 없으면 개방)
-  const secret = process.env.SYNC_SECRET
-  if (secret) {
+  // Vercel Cron 요청은 SYNC_SECRET으로 검증, 브라우저 요청은 통과
+  const isVercelCron = req.headers.get('x-vercel-cron') === '1'
+  if (isVercelCron) {
+    const secret = process.env.SYNC_SECRET
     const auth = req.headers.get('authorization') ?? ''
-    if (auth !== `Bearer ${secret}`) {
+    if (secret && auth !== `Bearer ${secret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
   }
