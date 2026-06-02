@@ -30,6 +30,12 @@ const CURRENCY: Record<string, string> = {
   UK: "£", DE: "€", FR: "€", IT: "€", ES: "€",
 };
 
+// "25-01" → "2025년 1월"
+function fmtMonth(m: string): string {
+  const [yy, mm] = m.split("-");
+  return `20${yy}년 ${parseInt(mm, 10)}월`;
+}
+
 function parseNum(s: string | null | undefined): number | null {
   if (!s) return null;
   const n = parseFloat(s.replace(/[^0-9.-]/g, ""));
@@ -80,7 +86,7 @@ export default function ReportsClient({
   const chartData = visibleMonths.slice().reverse().map((month) => {
     const idx = report!.months.indexOf(month);
     return {
-      month,
+      month: fmtMonth(month),
       sales: report!.campaign.sales[idx],
       spend: report!.campaign.spend[idx],
       acos: parseNum(report!.campaign.acos[idx]),
@@ -246,7 +252,7 @@ export default function ReportsClient({
                     const i = report.months.indexOf(month);
                     return (
                       <tr key={month} className={i === 0 ? "bg-blue-50/50 dark:bg-blue-950/20 font-medium" : ""}>
-                        <td className="px-4 py-2 text-neutral-700 dark:text-neutral-300">{month}</td>
+                        <td className="px-4 py-2 text-neutral-700 dark:text-neutral-300">{fmtMonth(month)}</td>
                         <td className="px-4 py-2 text-right">{fmt(report.campaign.impressions[i])}</td>
                         <td className="px-4 py-2 text-right">{fmt(report.campaign.clicks[i])}</td>
                         <td className="px-4 py-2 text-right">{report.campaign.ctr[i] ?? "—"}</td>
