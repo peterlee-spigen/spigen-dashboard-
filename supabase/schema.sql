@@ -23,7 +23,7 @@ CREATE TABLE ad_campaigns (
 );
 CREATE INDEX ad_campaigns_date_idx ON ad_campaigns (date);
 ALTER TABLE ad_campaigns ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_all" ON ad_campaigns FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_read" ON ad_campaigns FOR SELECT TO authenticated USING (true);
 
 -- attribution
 CREATE TABLE attribution (
@@ -46,7 +46,7 @@ CREATE TABLE attribution (
 );
 CREATE INDEX attribution_date_idx ON attribution (date);
 ALTER TABLE attribution ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_all" ON attribution FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_read" ON attribution FOR SELECT TO authenticated USING (true);
 
 -- orders (order_id+sku+purchase_date UK → 재업로드 중복 방지)
 CREATE TABLE orders (
@@ -66,7 +66,7 @@ CREATE TABLE orders (
 CREATE INDEX orders_purchase_date_idx ON orders (purchase_date);
 CREATE INDEX orders_asin_idx ON orders (asin);
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_all" ON orders FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_read" ON orders FOR SELECT TO authenticated USING (true);
 
 -- listing
 CREATE TABLE listing (
@@ -80,7 +80,7 @@ CREATE TABLE listing (
   updated_at          timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE listing ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_all" ON listing FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_read" ON listing FOR SELECT TO authenticated USING (true);
 
 -- inventory
 CREATE TABLE inventory (
@@ -100,7 +100,7 @@ CREATE TABLE inventory (
 CREATE INDEX inventory_report_date_idx ON inventory (report_date);
 CREATE INDEX inventory_asin_idx ON inventory (asin);
 ALTER TABLE inventory ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_all" ON inventory FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_read" ON inventory FOR SELECT TO authenticated USING (true);
 
 -- traffic
 CREATE TABLE traffic (
@@ -121,4 +121,4 @@ CREATE TABLE traffic (
 CREATE INDEX traffic_report_date_idx ON traffic (report_date);
 CREATE INDEX traffic_child_asin_idx ON traffic (child_asin);
 ALTER TABLE traffic ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_all" ON traffic FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_read" ON traffic FOR SELECT TO authenticated USING (true);

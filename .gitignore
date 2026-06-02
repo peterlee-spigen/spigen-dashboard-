@@ -43,3 +43,7 @@ next-env.d.ts
 # local agent tooling
 .claude/
 .omc/
+
+# credentials
+spigen-260512-mainsa-key.json
+*-sa-key.json

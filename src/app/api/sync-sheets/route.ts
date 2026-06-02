@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 import { getReportByCountry, getReportByCategory } from '@/lib/parsers/report-by-country'
 
 const supabase = createClient(
@@ -17,7 +18,6 @@ const SHEETS = [
 ]
 
 export async function POST(req: NextRequest) {
-  // Vercel Cron 요청은 SYNC_SECRET으로 검증, 브라우저 요청은 통과
   const isVercelCron = req.headers.get('x-vercel-cron') === '1'
   if (isVercelCron) {
     const secret = process.env.SYNC_SECRET
@@ -25,6 +25,10 @@ export async function POST(req: NextRequest) {
     if (secret && auth !== `Bearer ${secret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+  } else {
+    const supabase = await createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const syncedAt = new Date().toISOString()
