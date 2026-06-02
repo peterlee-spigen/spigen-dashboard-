@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 type Props = {
   lastSync: { synced_at: string; status: string } | null
@@ -9,6 +9,14 @@ type Props = {
 export default function SyncButton({ lastSync }: Props) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null)
+  const [lastSyncText, setLastSyncText] = useState('동기화 기록 없음')
+
+  useEffect(() => {
+    if (!lastSync) return
+    const d = new Date(lastSync.synced_at)
+    const text = `마지막 동기화: ${d.toLocaleString('ko-KR')} (${lastSync.status === 'success' ? '성공' : '실패'})`
+    setLastSyncText(text)
+  }, [lastSync])
 
   async function handleSync() {
     setLoading(true)
@@ -27,10 +35,6 @@ export default function SyncButton({ lastSync }: Props) {
       setLoading(false)
     }
   }
-
-  const lastSyncText = lastSync
-    ? `마지막 동기화: ${new Date(lastSync.synced_at).toLocaleString('ko-KR')} (${lastSync.status === 'success' ? '성공' : '실패'})`
-    : '동기화 기록 없음'
 
   return (
     <div className="flex items-center gap-3 text-sm">
