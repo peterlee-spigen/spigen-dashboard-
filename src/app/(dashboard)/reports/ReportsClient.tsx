@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import {
   BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -69,6 +69,9 @@ export default function ReportsClient({
 }) {
   const [reportTab, setReportTab] = useState<ReportTabId>("national");
   const [selectedKey, setSelectedKey] = useState<string>("UK");
+  const [insightText, setInsightText] = useState<string>("");
+  const [insightLoading, setInsightLoading] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   // 전체 월 목록 (오름차순)
   const allMonths = useMemo(() => {
@@ -127,6 +130,54 @@ export default function ReportsClient({
 
   const loadedTime = new Date(fetchedAt).toISOString().slice(11, 19);
 
+  async function runAiInsights() {
+    if (!report) return;
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    setInsightText("");
+    setInsightLoading(true);
+
+    const tabLabel = REPORT_TABS.find((t) => t.id === reportTab)?.label ?? reportTab;
+
+    try {
+      const res = await fetch("/api/ai-insights", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: ctrl.signal,
+        body: JSON.stringify({
+          tab: tabLabel,
+          key: selectedKey,
+          months: visibleMonths,
+          campaign: {
+            sales: visibleMonths.map((m) => report.campaign.sales[report.months.indexOf(m)]),
+            spend: visibleMonths.map((m) => report.campaign.spend[report.months.indexOf(m)]),
+            acos: visibleMonths.map((m) => report.campaign.acos[report.months.indexOf(m)]),
+            ctr: visibleMonths.map((m) => report.campaign.ctr[report.months.indexOf(m)]),
+            impressions: visibleMonths.map((m) => report.campaign.impressions[report.months.indexOf(m)]),
+            clicks: visibleMonths.map((m) => report.campaign.clicks[report.months.indexOf(m)]),
+            orders: visibleMonths.map((m) => report.campaign.orders[report.months.indexOf(m)]),
+          },
+        }),
+      });
+
+      if (!res.body) throw new Error("No response body");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        setInsightText((prev) => prev + decoder.decode(value, { stream: true }));
+      }
+    } catch (e) {
+      if ((e as Error).name !== "AbortError") {
+        setInsightText("AI 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      }
+    } finally {
+      setInsightLoading(false);
+    }
+  }
+
   return (
     <div className="p-6 space-y-5">
       {/* 헤더 */}
@@ -135,6 +186,18 @@ export default function ReportsClient({
         <div className="flex items-center gap-3">
           <span className="text-xs text-neutral-400">{loadedTime} 기준</span>
           <SyncButton lastSync={lastSync} />
+          <button
+            onClick={runAiInsights}
+            disabled={insightLoading || !report}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white transition-colors"
+          >
+            {insightLoading ? (
+              <span className="inline-block w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            ) : (
+              <span>✦</span>
+            )}
+            AI 분석
+          </button>
         </div>
       </div>
 
@@ -293,6 +356,21 @@ export default function ReportsClient({
               </table>
             </div>
           </div>
+          {/* AI 인사이트 패널 */}
+          {(insightText || insightLoading) && (
+            <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-violet-600 dark:text-violet-400 font-semibold text-sm">✦ AI 인사이트</span>
+                {insightLoading && (
+                  <span className="text-xs text-violet-400">분석 중...</span>
+                )}
+              </div>
+              <pre className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap font-sans leading-relaxed">
+                {insightText}
+                {insightLoading && <span className="inline-block w-2 h-4 bg-violet-400 animate-pulse ml-0.5 align-middle" />}
+              </pre>
+            </div>
+          )}
         </>
       )}
     </div>
