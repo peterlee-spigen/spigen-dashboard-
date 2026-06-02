@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 
 const NAV = [
   { href: "/reports", label: "광고 리포트", icon: "◇" },
+  { href: "/compare", label: "비교 대시보드", icon: "⊞" },
 ];
 
 export default function Sidebar({
