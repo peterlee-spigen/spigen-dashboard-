@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -69,7 +69,23 @@ export default function ReportsClient({
 }) {
   const [reportTab, setReportTab] = useState<ReportTabId>("national");
   const [selectedKey, setSelectedKey] = useState<string>("UK");
-  const [monthCount, setMonthCount] = useState<number>(12);
+
+  // 전체 월 목록 (오름차순)
+  const allMonths = useMemo(() => {
+    const base = (allData.national[0] ?? allData.mpc[0]) as CountryReport | CategoryReport | undefined;
+    return base ? [...base.months].sort() : [];
+  }, [allData]);
+
+  const [startMonth, setStartMonth] = useState<string>(() => {
+    const base = (allData.national[0] ?? allData.mpc[0]) as CountryReport | CategoryReport | undefined;
+    const months = base ? [...base.months].sort() : [];
+    return months[Math.max(0, months.length - 12)] ?? "";
+  });
+  const [endMonth, setEndMonth] = useState<string>(() => {
+    const base = (allData.national[0] ?? allData.mpc[0]) as CountryReport | CategoryReport | undefined;
+    const months = base ? [...base.months].sort() : [];
+    return months[months.length - 1] ?? "";
+  });
 
   const data = allData[reportTab] as (CountryReport | CategoryReport)[];
   const keys = data.map((d) => ("country" in d ? d.country : (d as CategoryReport).category));
@@ -80,10 +96,13 @@ export default function ReportsClient({
 
   const curr = reportTab === "national" ? (CURRENCY[selectedKey] ?? "€") : "€";
 
-  // 선택된 월 수만큼 슬라이스 (months[0]이 최신)
-  const visibleMonths = report ? report.months.slice(0, monthCount) : [];
+  // 선택된 범위의 월 목록
+  const visibleMonths = useMemo(
+    () => (report ? report.months.filter((m) => m >= startMonth && m <= endMonth) : []),
+    [report, startMonth, endMonth]
+  );
 
-  const chartData = visibleMonths.slice().reverse().map((month) => {
+  const chartData = visibleMonths.map((month) => {
     const idx = report!.months.indexOf(month);
     return {
       month: fmtMonth(month),
@@ -154,25 +173,32 @@ export default function ReportsClient({
               </button>
             ))}
           </div>
-          <div className="flex gap-1">
-            {[
-              { label: "3개월", value: 3 },
-              { label: "6개월", value: 6 },
-              { label: "12개월", value: 12 },
-              { label: "전체", value: 999 },
-            ].map(({ label, value }) => (
-              <button
-                key={value}
-                onClick={() => setMonthCount(value)}
-                className={`px-2.5 py-1 text-xs rounded transition-colors ${
-                  monthCount === value
-                    ? "bg-blue-600 text-white"
-                    : "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-700"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+          <div className="flex items-center gap-1.5">
+            <select
+              value={startMonth}
+              onChange={(e) => {
+                setStartMonth(e.target.value);
+                if (e.target.value > endMonth) setEndMonth(e.target.value);
+              }}
+              className="border border-neutral-300 dark:border-neutral-600 rounded-lg px-2 py-1 text-xs bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200"
+            >
+              {allMonths.map((m) => (
+                <option key={m} value={m}>{fmtMonth(m)}</option>
+              ))}
+            </select>
+            <span className="text-neutral-400 text-xs">~</span>
+            <select
+              value={endMonth}
+              onChange={(e) => {
+                setEndMonth(e.target.value);
+                if (e.target.value < startMonth) setStartMonth(e.target.value);
+              }}
+              className="border border-neutral-300 dark:border-neutral-600 rounded-lg px-2 py-1 text-xs bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200"
+            >
+              {allMonths.map((m) => (
+                <option key={m} value={m}>{fmtMonth(m)}</option>
+              ))}
+            </select>
           </div>
         </div>
       )}

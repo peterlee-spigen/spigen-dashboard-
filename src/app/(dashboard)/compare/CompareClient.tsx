@@ -90,7 +90,24 @@ export default function CompareClient({
   const [selectedSheet, setSelectedSheet] = useState<SheetKey>("national");
   const [selectedCountry, setSelectedCountry] = useState<string>("UK");
   const [selectedMetric, setSelectedMetric]   = useState<MetricKey>("sales");
-  const [monthCount, setMonthCount]           = useState<number>(12);
+
+  // 전체 월 목록 (오름차순, YY-MM 형식)
+  const allMonths = useMemo(() => {
+    const base = allData.national[0] ?? allData.mpc[0];
+    return base ? [...base.months].sort() : [];
+  }, [allData]);
+
+  const [startMonth, setStartMonth] = useState<string>(() => {
+    const base = allData.national[0] ?? allData.mpc[0];
+    const months = base ? [...base.months].sort() : [];
+    // 기본: 최근 12개월 시작
+    return months[Math.max(0, months.length - 12)] ?? months[0] ?? "";
+  });
+  const [endMonth, setEndMonth] = useState<string>(() => {
+    const base = allData.national[0] ?? allData.mpc[0];
+    const months = base ? [...base.months].sort() : [];
+    return months[months.length - 1] ?? "";
+  });
 
   const metricInfo = METRICS.find((m) => m.key === selectedMetric)!;
 
@@ -121,11 +138,10 @@ export default function CompareClient({
       }
     }, [viewMode, selectedSheet, selectedCountry, allData]);
 
-  /* ── 공통 월 목록 (첫 번째 유효 report 기준) ── */
-  const baseReport = series.find((s) => s.report)?.report;
-  const allMonths  = baseReport ? baseReport.months.slice().reverse() : [];
-  const visibleMonths = allMonths.slice(
-    Math.max(0, allMonths.length - (monthCount === 999 ? allMonths.length : monthCount))
+  /* ── 선택 범위 내 월 목록 ─────────────────── */
+  const visibleMonths = useMemo(
+    () => allMonths.filter((m) => m >= startMonth && m <= endMonth),
+    [allMonths, startMonth, endMonth]
   );
 
   /* ── Multi-series 차트 데이터 ───────────────── */
@@ -251,24 +267,32 @@ export default function CompareClient({
         {/* 기간 선택 */}
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-neutral-500 w-16 shrink-0">기간</span>
-          {[
-            { label: "3개월", value: 3 },
-            { label: "6개월", value: 6 },
-            { label: "12개월", value: 12 },
-            { label: "전체", value: 999 },
-          ].map(({ label, value }) => (
-            <button
-              key={value}
-              onClick={() => setMonthCount(value)}
-              className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                monthCount === value
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:border-blue-400"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+          <select
+            value={startMonth}
+            onChange={(e) => {
+              setStartMonth(e.target.value);
+              if (e.target.value > endMonth) setEndMonth(e.target.value);
+            }}
+            className="border border-neutral-300 dark:border-neutral-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200"
+          >
+            {allMonths.map((m) => (
+              <option key={m} value={m}>{fmtMonth(m)}</option>
+            ))}
+          </select>
+          <span className="text-neutral-400 text-sm">~</span>
+          <select
+            value={endMonth}
+            onChange={(e) => {
+              setEndMonth(e.target.value);
+              if (e.target.value < startMonth) setStartMonth(e.target.value);
+            }}
+            className="border border-neutral-300 dark:border-neutral-600 rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200"
+          >
+            {allMonths.map((m) => (
+              <option key={m} value={m}>{fmtMonth(m)}</option>
+            ))}
+          </select>
+          <span className="text-xs text-neutral-400">({visibleMonths.length}개월)</span>
         </div>
       </div>
 
