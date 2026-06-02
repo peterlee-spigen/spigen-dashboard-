@@ -3,14 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV = [
-  { href: "/", label: "Executive Summary", icon: "▦" },
-  { href: "/ads", label: "광고 성과", icon: "◈" },
-  { href: "/reports", label: "국가별 리포트", icon: "◇" },
-  { href: "/products", label: "상품 성과", icon: "◉" },
-  { href: "/inventory", label: "재고 관리", icon: "▣" },
-  { href: "/traffic", label: "트래픽 분석", icon: "◎" },
-  { href: "/orders", label: "주문 분석", icon: "◐" },
-  { href: "/upload", label: "데이터 업로드", icon: "▲" },
+  { href: "/reports", label: "광고 리포트", icon: "◇" },
 ];
 
 export default function Sidebar({
