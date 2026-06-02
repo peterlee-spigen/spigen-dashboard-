@@ -72,6 +72,7 @@ export default function ReportsClient({
   const [insightText, setInsightText] = useState<string>("");
   const [insightLoading, setInsightLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const insightRef = useRef<HTMLDivElement | null>(null);
 
   // 전체 월 목록 (오름차순)
   const allMonths = useMemo(() => {
@@ -137,6 +138,7 @@ export default function ReportsClient({
     abortRef.current = ctrl;
     setInsightText("");
     setInsightLoading(true);
+    setTimeout(() => insightRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
 
     const tabLabel = REPORT_TABS.find((t) => t.id === reportTab)?.label ?? reportTab;
 
@@ -358,7 +360,7 @@ export default function ReportsClient({
           </div>
           {/* AI 인사이트 패널 */}
           {(insightText || insightLoading) && (
-            <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 rounded-xl p-5">
+            <div ref={insightRef} className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 rounded-xl p-5">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-violet-600 dark:text-violet-400 font-semibold text-sm">✦ AI 인사이트</span>
                 {insightLoading && (
