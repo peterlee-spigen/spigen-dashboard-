@@ -63,8 +63,8 @@ export default function ReportsClient({
 }) {
   const [reportTab, setReportTab] = useState<ReportTabId>("national");
   const [selectedKey, setSelectedKey] = useState<string>("UK");
+  const [monthCount, setMonthCount] = useState<number>(12);
 
-  // 탭 전환 = 서버에서 받은 allData에서 즉시 조회 (추가 네트워크 없음)
   const data = allData[reportTab] as (CountryReport | CategoryReport)[];
   const keys = data.map((d) => ("country" in d ? d.country : (d as CategoryReport).category));
 
@@ -74,18 +74,19 @@ export default function ReportsClient({
 
   const curr = reportTab === "national" ? (CURRENCY[selectedKey] ?? "€") : "€";
 
-  const chartData = report
-    ? [...report.months].slice(0, 12).reverse().map((month) => {
-        const idx = report.months.indexOf(month);
-        return {
-          month,
-          sales: report.campaign.sales[idx],
-          spend: report.campaign.spend[idx],
-          acos: parseNum(report.campaign.acos[idx]),
-          ctr: parseNum(report.campaign.ctr[idx]),
-        };
-      })
-    : [];
+  // 선택된 월 수만큼 슬라이스 (months[0]이 최신)
+  const visibleMonths = report ? report.months.slice(0, monthCount) : [];
+
+  const chartData = visibleMonths.slice().reverse().map((month) => {
+    const idx = report!.months.indexOf(month);
+    return {
+      month,
+      sales: report!.campaign.sales[idx],
+      spend: report!.campaign.spend[idx],
+      acos: parseNum(report!.campaign.acos[idx]),
+      ctr: parseNum(report!.campaign.ctr[idx]),
+    };
+  });
 
   const latest = report ? {
     sales:  report.campaign.sales[0],
@@ -131,22 +132,44 @@ export default function ReportsClient({
         ))}
       </div>
 
-      {/* 국가 / 카테고리 선택 */}
+      {/* 국가 / 카테고리 선택 + 월 범위 */}
       {keys.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {keys.map((key) => (
-            <button
-              key={key}
-              onClick={() => setSelectedKey(key)}
-              className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                selectedKey === key
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:border-blue-400"
-              }`}
-            >
-              {key}
-            </button>
-          ))}
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
+            {keys.map((key) => (
+              <button
+                key={key}
+                onClick={() => setSelectedKey(key)}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                  selectedKey === key
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:border-blue-400"
+                }`}
+              >
+                {key}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1">
+            {[
+              { label: "3개월", value: 3 },
+              { label: "6개월", value: 6 },
+              { label: "12개월", value: 12 },
+              { label: "전체", value: 999 },
+            ].map(({ label, value }) => (
+              <button
+                key={value}
+                onClick={() => setMonthCount(value)}
+                className={`px-2.5 py-1 text-xs rounded transition-colors ${
+                  monthCount === value
+                    ? "bg-blue-600 text-white"
+                    : "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-700"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -173,7 +196,7 @@ export default function ReportsClient({
           {/* 매출 vs 광고비 */}
           <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl p-5">
             <h2 className="text-sm font-semibold mb-4 text-neutral-700 dark:text-neutral-200">
-              월별 광고 매출 vs 광고비 ({curr}, 최근 12개월)
+              월별 광고 매출 vs 광고비 ({curr}, {visibleMonths.length}개월)
             </h2>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={chartData}>
@@ -221,18 +244,21 @@ export default function ReportsClient({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                  {report.months.slice(0, 16).map((month, i) => (
-                    <tr key={month} className={i === 0 ? "bg-blue-50/50 dark:bg-blue-950/20 font-medium" : ""}>
-                      <td className="px-4 py-2 text-neutral-700 dark:text-neutral-300">{month}</td>
-                      <td className="px-4 py-2 text-right">{fmt(report.campaign.impressions[i])}</td>
-                      <td className="px-4 py-2 text-right">{fmt(report.campaign.clicks[i])}</td>
-                      <td className="px-4 py-2 text-right">{report.campaign.ctr[i] ?? "—"}</td>
-                      <td className="px-4 py-2 text-right">{fmt(report.campaign.spend[i], curr)}</td>
-                      <td className="px-4 py-2 text-right">{report.campaign.acos[i] ?? "—"}</td>
-                      <td className="px-4 py-2 text-right">{fmt(report.campaign.orders[i])}</td>
-                      <td className="px-4 py-2 text-right">{fmt(report.campaign.sales[i], curr)}</td>
-                    </tr>
-                  ))}
+                  {visibleMonths.map((month) => {
+                    const i = report.months.indexOf(month);
+                    return (
+                      <tr key={month} className={i === 0 ? "bg-blue-50/50 dark:bg-blue-950/20 font-medium" : ""}>
+                        <td className="px-4 py-2 text-neutral-700 dark:text-neutral-300">{month}</td>
+                        <td className="px-4 py-2 text-right">{fmt(report.campaign.impressions[i])}</td>
+                        <td className="px-4 py-2 text-right">{fmt(report.campaign.clicks[i])}</td>
+                        <td className="px-4 py-2 text-right">{report.campaign.ctr[i] ?? "—"}</td>
+                        <td className="px-4 py-2 text-right">{fmt(report.campaign.spend[i], curr)}</td>
+                        <td className="px-4 py-2 text-right">{report.campaign.acos[i] ?? "—"}</td>
+                        <td className="px-4 py-2 text-right">{fmt(report.campaign.orders[i])}</td>
+                        <td className="px-4 py-2 text-right">{fmt(report.campaign.sales[i], curr)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
