@@ -183,9 +183,7 @@ export default function ReportsClient({
       {/* 헤더 */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50">광고 리포트</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-neutral-400">{loadedTime} 기준</span>
-          <SyncButton lastSync={lastSync} />
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <button
             onClick={runAiInsights}
             disabled={insightLoading || !report}
@@ -198,6 +196,8 @@ export default function ReportsClient({
             )}
             AI 분석
           </button>
+          <SyncButton lastSync={lastSync} />
+          <span className="text-xs text-neutral-400">{loadedTime} 기준</span>
         </div>
       </div>
 
