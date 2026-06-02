@@ -100,9 +100,7 @@ export default function ReportsClient({
     spend: report.campaign.spend[1],
   } : null;
 
-  const loadedTime = new Date(fetchedAt).toLocaleTimeString("ko-KR", {
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
-  });
+  const loadedTime = new Date(fetchedAt).toISOString().slice(11, 19);
 
   return (
     <div className="p-6 space-y-5">
