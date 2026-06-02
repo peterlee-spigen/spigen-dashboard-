@@ -1,21 +1,26 @@
-import { getReportByCountry, getReportByCategory } from '@/lib/parsers/report-by-country'
+import {
+  getReportByCountryFromDB,
+  getReportByCategoryFromDB,
+  getLastSync,
+} from '@/lib/supabase-reports'
 import ReportsClient from './ReportsClient'
 
 export default async function ReportsPage() {
-  // 6탭 동시 fetch — unstable_cache(revalidate:60) 적용됨
-  const [national, mpc, cp, sda, auto, power] = await Promise.all([
-    getReportByCountry(),
-    getReportByCategory('Report(MPC)'),
-    getReportByCategory('Report(CP)'),
-    getReportByCategory('Report(SDA)'),
-    getReportByCategory('Report(Auto)'),
-    getReportByCategory('Report(Power)'),
+  const [national, mpc, cp, sda, auto, power, lastSync] = await Promise.all([
+    getReportByCountryFromDB(),
+    getReportByCategoryFromDB('MPC'),
+    getReportByCategoryFromDB('CP'),
+    getReportByCategoryFromDB('SDA'),
+    getReportByCategoryFromDB('Auto'),
+    getReportByCategoryFromDB('Power'),
+    getLastSync(),
   ])
 
   return (
     <ReportsClient
       allData={{ national, mpc, cp, sda, auto, power }}
       fetchedAt={new Date().toISOString()}
+      lastSync={lastSync}
     />
   )
 }

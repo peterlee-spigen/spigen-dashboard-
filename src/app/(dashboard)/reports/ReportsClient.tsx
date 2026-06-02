@@ -5,6 +5,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import type { CountryReport, CategoryReport } from "@/lib/parsers/report-by-country";
+import SyncButton from "@/components/SyncButton";
 
 const REPORT_TABS = [
   { id: "national", label: "국가별" },
@@ -54,9 +55,11 @@ function DeltaBadge({ d }: { d: number | null }) {
 export default function ReportsClient({
   allData,
   fetchedAt,
+  lastSync,
 }: {
   allData: AllData
   fetchedAt: string
+  lastSync: { synced_at: string; status: string } | null
 }) {
   const [reportTab, setReportTab] = useState<ReportTabId>("national");
   const [selectedKey, setSelectedKey] = useState<string>("UK");
@@ -107,9 +110,7 @@ export default function ReportsClient({
         <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50">광고 리포트</h1>
         <div className="flex items-center gap-3">
           <span className="text-xs text-neutral-400">{loadedTime} 기준</span>
-          <span className="text-xs text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded">
-            📊 Google Sheets 연동
-          </span>
+          <SyncButton lastSync={lastSync} />
         </div>
       </div>
 
