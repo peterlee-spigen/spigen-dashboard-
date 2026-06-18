@@ -4,6 +4,10 @@
     {
       "path": "/api/sync-sheets",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/chat-summary",
+      "schedule": "0 0 * * 1-5"
     }
   ]
 }
