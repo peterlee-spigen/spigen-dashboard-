@@ -22,6 +22,8 @@ type AllData = {
 
 /* ── 상수 ─────────────────────────────────────── */
 const COUNTRIES = ["UK", "DE", "FR", "IT", "ES"] as const;
+const SUB_CATEGORIES = ["사업부", "삼성A", "애플"] as const;
+type SubCategoryKey = typeof SUB_CATEGORIES[number];
 const CATEGORIES: { key: SheetKey; label: string }[] = [
   { key: "mpc", label: "MPC" },
   { key: "cp", label: "CP" },
@@ -90,6 +92,7 @@ export default function CompareClient({
   const [selectedSheet, setSelectedSheet] = useState<SheetKey>("national");
   const [selectedCountry, setSelectedCountry] = useState<string>("UK");
   const [selectedMetric, setSelectedMetric]   = useState<MetricKey>("sales");
+  const [selectedSubCat, setSelectedSubCat]   = useState<SubCategoryKey>("사업부");
 
   // 전체 월 목록 (오름차순, YY-MM 형식)
   const allMonths = useMemo(() => {
@@ -112,31 +115,51 @@ export default function CompareClient({
   const metricInfo = METRICS.find((m) => m.key === selectedMetric)!;
 
   /* ── 시리즈 데이터 구성 ──────────────────── */
+  // 현재 시트에서 서브카테고리 목록 추출 (없으면 빈 배열)
+  const availableSubCats = useMemo(() => {
+    if (selectedSheet === "national") return [];
+    const data = allData[selectedSheet] as CategoryReport[];
+    return [...new Set(data.map(r => r.subCategory).filter(Boolean))].sort();
+  }, [selectedSheet, allData]);
+
   const series: { key: string; label: string; color: string; report: CountryReport | CategoryReport | undefined }[] =
     useMemo(() => {
       if (viewMode === "country") {
-        // 선택된 시트에서 5개국 각각의 report 추출
         const sheetData = allData[selectedSheet] as (CountryReport | CategoryReport)[];
-        return COUNTRIES.map((c, i) => ({
+        // 서브카테고리 필터 적용
+        const filteredData = availableSubCats.length > 0
+          ? (sheetData as CategoryReport[]).filter(r => r.subCategory === selectedSubCat)
+          : sheetData;
+        // 해당 서브카테고리에 데이터가 있는 국가만 시리즈로 구성
+        const visibleCountries = availableSubCats.length > 0
+          ? COUNTRIES.filter(c => (filteredData as CategoryReport[]).some(r => r.category === c))
+          : COUNTRIES;
+        return visibleCountries.map((c, i) => ({
           key: c,
           label: c,
-          color: COLORS[i],
-          report: sheetData.find((r) =>
+          color: COLORS[i % COLORS.length],
+          report: filteredData.find((r) =>
             "country" in r ? r.country === c : (r as CategoryReport).category === c
           ),
         }));
       } else {
         // 선택된 국가에서 5개 카테고리 각각의 report 추출
-        return CATEGORIES.map(({ key, label }, i) => ({
-          key,
-          label,
-          color: COLORS[i],
-          report: (allData[key] as CategoryReport[]).find(
-            (r) => r.category === selectedCountry
-          ),
-        }));
+        return CATEGORIES.map(({ key, label }, i) => {
+          const data = allData[key] as CategoryReport[];
+          const hasSubCats = data.some(r => r.subCategory);
+          return {
+            key,
+            label,
+            color: COLORS[i],
+            report: data.find((r) =>
+              hasSubCats
+                ? r.category === selectedCountry && r.subCategory === selectedSubCat
+                : r.category === selectedCountry
+            ),
+          };
+        });
       }
-    }, [viewMode, selectedSheet, selectedCountry, allData]);
+    }, [viewMode, selectedSheet, selectedCountry, selectedSubCat, allData, availableSubCats]);
 
   /* ── 선택 범위 내 월 목록 ─────────────────── */
   const visibleMonths = useMemo(
@@ -245,6 +268,26 @@ export default function CompareClient({
               ))
           }
         </div>
+
+        {/* 서브카테고리 선택 (서브카테고리가 있는 시트에서만 표시) */}
+        {availableSubCats.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-neutral-500 w-16 shrink-0">사업</span>
+            {availableSubCats.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedSubCat(cat as SubCategoryKey)}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                  selectedSubCat === cat
+                    ? "bg-emerald-600 text-white border-emerald-600"
+                    : "border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:border-emerald-400"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* 지표 선택 */}
         <div className="flex items-center gap-2 flex-wrap">

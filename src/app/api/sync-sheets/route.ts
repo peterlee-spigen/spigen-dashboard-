@@ -44,10 +44,12 @@ export async function POST(req: NextRequest) {
         const groupKey = isCountry
           ? (report as { country: string }).country
           : (report as { category: string }).category
+        const subCategory = (report as { subCategory?: string }).subCategory ?? ''
 
         return report.months.map((month, i) => ({
           sheet_name: sheetName,
           group_key: groupKey,
+          sub_category: subCategory,
           month,
           impressions: report.campaign.impressions[i] ?? null,
           clicks: report.campaign.clicks[i] ?? null,
@@ -67,7 +69,7 @@ export async function POST(req: NextRequest) {
 
       const { error } = await supabase
         .from('report_metrics')
-        .upsert(rows, { onConflict: 'sheet_name,group_key,month' })
+        .upsert(rows, { onConflict: 'sheet_name,group_key,sub_category,month' })
 
       if (error) throw new Error(`Upsert failed for ${sheetName}: ${error.message}`)
       totalRows += rows.length

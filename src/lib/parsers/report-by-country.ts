@@ -21,6 +21,7 @@ export type CountryReport = {
 
 export type CategoryReport = {
   category: string
+  subCategory: string
   months: string[]
   campaign: {
     impressions: (number | null)[]
@@ -57,8 +58,10 @@ function extractStrings(row: string[] | null, monthCount: number): (string | nul
 
 // 공통 파싱 함수: Source 헤더 기준으로 블록을 나눠 지표 추출
 // col[3]의 값이 국가코드(UK/DE...)이거나 카테고리명(MPC/CP...)인 점만 다름
+// col[2]의 값이 서브카테고리(사업부/삼성A/애플)인 경우 subCategory별로 분리
 export function parseReportBlocks(raw: string[][]): Array<{
   key: string
+  subCategory: string
   months: string[]
   campaign: CountryReport['campaign']
   adSales: CountryReport['adSales']
@@ -68,7 +71,10 @@ export function parseReportBlocks(raw: string[][]): Array<{
     if (row[1] === 'Source') headerRowIndices.push(i)
   })
 
-  return headerRowIndices.map((headerIdx, h) => {
+  const result: ReturnType<typeof parseReportBlocks> = []
+
+  for (let h = 0; h < headerRowIndices.length; h++) {
+    const headerIdx = headerRowIndices[h]
     const nextHeaderIdx = headerRowIndices[h + 1] ?? raw.length
     const headerRow = raw[headerIdx]
 
@@ -80,39 +86,56 @@ export function parseReportBlocks(raw: string[][]): Array<{
     }
 
     const block = raw.slice(headerIdx + 1, nextHeaderIdx)
-    const findRow = (label: string) =>
-      block.find((r) => r[3]?.trim().toLowerCase() === label.toLowerCase()) ?? null
 
-    const n = months.length
+    // col[2]에 서브카테고리가 있는지 확인 (헤더 row의 col[2]는 '카테고리' 라벨)
+    const subCats = [...new Set(
+      block.map(r => r[2]).filter(v => v && v !== '카테고리')
+    )]
 
-    return {
-      key,
-      months,
-      campaign: {
-        impressions: extractValues(findRow('Impressions') ?? findRow('Ad Impressions'), n),
-        clicks: extractValues(findRow('Clicks') ?? findRow('Ad Clicks'), n),
-        ctr: extractStrings(findRow('CTR') ?? findRow('Ad CTR'), n),
-        spend: extractValues(findRow('Spend'), n),
-        acos: extractStrings(findRow('ACOS'), n),
-        cvr: extractStrings(findRow('CVR') ?? findRow('Ad CVR'), n),
-        orders: extractValues(findRow('Orders') ?? findRow('Ad Orders'), n),
-        sales: extractValues(findRow('Sales') ?? findRow('Ad Sales'), n),
-      },
-      adSales: {
-        promotedSales: extractValues(
-          findRow('Promoted Sales') ?? findRow('Promoted Ad Sales'), n
-        ),
-        haloSales: extractValues(
-          findRow('Halo Sales') ?? findRow('Halo Ad Sales'), n
-        ),
-      },
+    // 서브카테고리가 없으면 '' 단일 그룹으로 처리
+    const groups = subCats.length > 0 ? subCats : ['']
+
+    for (const subCat of groups) {
+      const subBlock = subCat
+        ? block.filter(r => r[2] === subCat)
+        : block
+
+      const n = months.length
+      const findRow = (label: string) =>
+        subBlock.find((r) => r[3]?.trim().toLowerCase() === label.toLowerCase()) ?? null
+
+      result.push({
+        key,
+        subCategory: subCat,
+        months,
+        campaign: {
+          impressions: extractValues(findRow('Impressions') ?? findRow('Ad Impressions'), n),
+          clicks: extractValues(findRow('Clicks') ?? findRow('Ad Clicks'), n),
+          ctr: extractStrings(findRow('CTR') ?? findRow('Ad CTR'), n),
+          spend: extractValues(findRow('Spend'), n),
+          acos: extractStrings(findRow('ACOS'), n),
+          cvr: extractStrings(findRow('CVR') ?? findRow('Ad CVR'), n),
+          orders: extractValues(findRow('Orders') ?? findRow('Ad Orders'), n),
+          sales: extractValues(findRow('Sales') ?? findRow('Ad Sales'), n),
+        },
+        adSales: {
+          promotedSales: extractValues(
+            findRow('Promoted Sales') ?? findRow('Promoted Ad Sales'), n
+          ),
+          haloSales: extractValues(
+            findRow('Halo Sales') ?? findRow('Halo Ad Sales'), n
+          ),
+        },
+      })
     }
-  })
+  }
+
+  return result
 }
 
 export async function getReportByCountry(): Promise<CountryReport[]> {
   const raw = await getSheetData('Report(국가별)!A1:Z130')
-  return parseReportBlocks(raw).map(({ key, ...rest }) => ({
+  return parseReportBlocks(raw).map(({ key, subCategory, ...rest }) => ({
     country: key,
     ...rest,
   }))
@@ -121,9 +144,10 @@ export async function getReportByCountry(): Promise<CountryReport[]> {
 export async function getReportByCategory(
   sheetName: string
 ): Promise<CategoryReport[]> {
-  const raw = await getSheetData(`${sheetName}!A1:Z130`)
-  return parseReportBlocks(raw).map(({ key, ...rest }) => ({
+  const raw = await getSheetData(`${sheetName}!A1:Z200`)
+  return parseReportBlocks(raw).map(({ key, subCategory, ...rest }) => ({
     category: key,
+    subCategory,
     ...rest,
   }))
 }

@@ -15,6 +15,7 @@ const supabase = createClient(
 type MetricRow = {
   sheet_name: string
   group_key: string
+  sub_category: string
   month: string
   impressions: number | null
   clicks: number | null
@@ -34,17 +35,20 @@ function rowsToReports<T extends { months: string[] }>(
 ): T[] {
   const grouped = new Map<string, MetricRow[]>()
   for (const row of rows) {
-    const arr = grouped.get(row.group_key) ?? []
+    const mapKey = `${row.group_key}||${row.sub_category}`
+    const arr = grouped.get(mapKey) ?? []
     arr.push(row)
-    grouped.set(row.group_key, arr)
+    grouped.set(mapKey, arr)
   }
 
   const result: T[] = []
-  for (const [key, keyRows] of grouped) {
+  for (const [mapKey, keyRows] of grouped) {
+    const [groupKey, subCategory] = mapKey.split('||')
     const sorted = keyRows.sort((a, b) => a.month.localeCompare(b.month))
     const months = sorted.map((r) => r.month)
     result.push({
-      [keyField]: key,
+      [keyField]: groupKey,
+      subCategory: subCategory ?? '',
       months,
       campaign: {
         impressions: sorted.map((r) => r.impressions),
