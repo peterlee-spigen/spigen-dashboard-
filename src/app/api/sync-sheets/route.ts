@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase/server'
-import { getReportByCountry, getReportByCategory } from '@/lib/parsers/report-by-country'
+import { getReportByCountry } from '@/lib/parsers/report-by-country'
+import { getFilteredCampaignReports } from '@/lib/parsers/filtered-campaign'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const SHEETS = [
-  { sheetName: '국가별', isCountry: true },
-  { sheetName: 'MPC', isCountry: false },
-  { sheetName: 'CP', isCountry: false },
-  { sheetName: 'SDA', isCountry: false },
-  { sheetName: 'Auto', isCountry: false },
-  { sheetName: 'Power', isCountry: false },
-]
+// 필터_Campaign 카테고리 → 대시보드 sheet_name 매핑
+const CATEGORY_SHEET_MAP: Record<string, string[]> = {
+  MPC:   ['전략폰', '애플', '삼성A', '삼성B', '아웃도어'],
+  CP:    ['CP'],
+  SDA:   ['스디악'],
+  Power: ['파워'],
+  Auto:  [],
+}
 
 export async function POST(req: NextRequest) {
   const isVercelCron = req.headers.get('x-vercel-cron') === '1'
@@ -35,21 +36,45 @@ export async function POST(req: NextRequest) {
   let totalRows = 0
 
   try {
-    for (const { sheetName, isCountry } of SHEETS) {
-      const reports = isCountry
-        ? await getReportByCountry()
-        : await getReportByCategory(`Report(${sheetName})`)
+    // 1. 국가별 데이터 동기화
+    const countryReports = await getReportByCountry()
+    const countryRows = countryReports.flatMap((report) =>
+      report.months.map((month, i) => ({
+        sheet_name: '국가별',
+        group_key: report.country,
+        sub_category: '',
+        month,
+        impressions: report.campaign.impressions[i] ?? null,
+        clicks: report.campaign.clicks[i] ?? null,
+        ctr: report.campaign.ctr[i] ?? null,
+        spend: report.campaign.spend[i] ?? null,
+        acos: report.campaign.acos[i] ?? null,
+        cvr: report.campaign.cvr[i] ?? null,
+        orders: report.campaign.orders[i] ?? null,
+        sales: report.campaign.sales[i] ?? null,
+        promoted_sales: report.adSales.promotedSales[i] ?? null,
+        halo_sales: report.adSales.haloSales[i] ?? null,
+        synced_at: syncedAt,
+      }))
+    )
+    if (countryRows.length > 0) {
+      const { error } = await supabase
+        .from('report_metrics')
+        .upsert(countryRows, { onConflict: 'sheet_name,group_key,sub_category,month' })
+      if (error) throw new Error(`Upsert failed for 국가별: ${error.message}`)
+      totalRows += countryRows.length
+    }
 
-      const rows = reports.flatMap((report) => {
-        const groupKey = isCountry
-          ? (report as { country: string }).country
-          : (report as { category: string }).category
-        const subCategory = (report as { subCategory?: string }).subCategory ?? ''
+    // 2. 카테고리 시트 동기화 (필터_Campaign 기반)
+    for (const [sheetName, categories] of Object.entries(CATEGORY_SHEET_MAP)) {
+      if (categories.length === 0) continue
 
-        return report.months.map((month, i) => ({
+      const reports = await getFilteredCampaignReports(categories)
+      const rows = reports.flatMap((report) =>
+        report.months.map((month, i) => ({
           sheet_name: sheetName,
-          group_key: groupKey,
-          sub_category: subCategory,
+          group_key: report.category,      // 국가 (UK/DE/...)
+          sub_category: report.subCategory, // 제품카테고리 (전략폰/애플/...)
           month,
           impressions: report.campaign.impressions[i] ?? null,
           clicks: report.campaign.clicks[i] ?? null,
@@ -59,13 +84,19 @@ export async function POST(req: NextRequest) {
           cvr: report.campaign.cvr[i] ?? null,
           orders: report.campaign.orders[i] ?? null,
           sales: report.campaign.sales[i] ?? null,
-          promoted_sales: report.adSales.promotedSales[i] ?? null,
-          halo_sales: report.adSales.haloSales[i] ?? null,
+          promoted_sales: null,
+          halo_sales: null,
           synced_at: syncedAt,
         }))
-      })
+      )
 
       if (rows.length === 0) continue
+
+      // 기존 데이터 삭제 후 재삽입 (카테고리 구조 변경 대응)
+      await supabase
+        .from('report_metrics')
+        .delete()
+        .eq('sheet_name', sheetName)
 
       const { error } = await supabase
         .from('report_metrics')
