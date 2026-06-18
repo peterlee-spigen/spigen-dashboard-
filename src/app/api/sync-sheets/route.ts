@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       const rows = reports.flatMap((report) =>
         report.months.map((month, i) => ({
           sheet_name: sheetName,
-          group_key: report.category,      // 국가 (UK/DE/...)
+          group_key: report.category,       // 국가 (UK/DE/...)
           sub_category: report.subCategory, // 제품카테고리 (전략폰/애플/...)
           month,
           impressions: report.campaign.impressions[i] ?? null,

@@ -272,7 +272,7 @@ export default function CompareClient({
         {/* 서브카테고리 선택 (서브카테고리가 있는 시트에서만 표시) */}
         {availableSubCats.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-neutral-500 w-16 shrink-0">사업</span>
+            <span className="text-xs text-neutral-500 w-16 shrink-0">카테고리</span>
             {availableSubCats.map((cat) => (
               <button
                 key={cat}
