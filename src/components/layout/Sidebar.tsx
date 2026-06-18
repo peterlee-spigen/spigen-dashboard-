@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 const NAV = [
   { href: "/reports", label: "광고 리포트", icon: "◇" },
   { href: "/compare", label: "비교 대시보드", icon: "⊞" },
+  { href: "/campaigns", label: "캠페인 성과", icon: "▶" },
 ];
 
 export default function Sidebar({
