@@ -1,0 +1,18 @@
+{
+  "name": "gcf-chat-summary",
+  "version": "1.0.0",
+  "description": "Google Chat daily summary via Claude AI",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "deploy": "bash deploy.sh"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.56.0",
+    "@googleapis/chat": "^9.0.0",
+    "google-auth-library": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
