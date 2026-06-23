@@ -175,6 +175,8 @@ export default function ReportsClient({
         body: JSON.stringify({
           tab: tabLabel,
           key: selectedSubKey ? `${selectedKey} (${selectedSubKey})` : selectedKey,
+          country: selectedKey,
+          subCategory: selectedSubKey || null,
           months: visibleMonths,
           campaign: {
             sales: visibleMonths.map((m) => report.campaign.sales[report.months.indexOf(m)]),
