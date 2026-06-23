@@ -92,7 +92,7 @@ export default function ReportsClient({
   });
 
   const data = allData[reportTab] as (CountryReport | CategoryReport)[];
-  const keys = data.map((d) => ("country" in d ? d.country : (d as CategoryReport).category));
+  const keys = [...new Set(data.map((d) => ("country" in d ? d.country : (d as CategoryReport).category)))];
 
   const report = data.find((d) =>
     ("country" in d ? d.country : (d as CategoryReport).category) === selectedKey
