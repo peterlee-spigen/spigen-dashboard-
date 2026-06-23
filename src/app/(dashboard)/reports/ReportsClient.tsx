@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -69,6 +69,7 @@ export default function ReportsClient({
 }) {
   const [reportTab, setReportTab] = useState<ReportTabId>("national");
   const [selectedKey, setSelectedKey] = useState<string>("UK");
+  const [selectedSubKey, setSelectedSubKey] = useState<string>("");
   const [insightText, setInsightText] = useState<string>("");
   const [insightLoading, setInsightLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -94,9 +95,28 @@ export default function ReportsClient({
   const data = allData[reportTab] as (CountryReport | CategoryReport)[];
   const keys = [...new Set(data.map((d) => ("country" in d ? d.country : (d as CategoryReport).category)))];
 
-  const report = data.find((d) =>
-    ("country" in d ? d.country : (d as CategoryReport).category) === selectedKey
-  ) as CountryReport | undefined;
+  // MPC 소 카테고리: 현재 선택된 국가에 해당하는 subCategory 목록
+  const subKeys = useMemo(() => {
+    if (reportTab !== "mpc") return [];
+    return [...new Set(
+      (data as CategoryReport[])
+        .filter((d) => d.category === selectedKey)
+        .map((d) => d.subCategory)
+        .filter(Boolean)
+    )];
+  }, [data, reportTab, selectedKey]);
+
+  // 국가 또는 탭 변경 시 첫 번째 소 카테고리로 리셋
+  useEffect(() => {
+    setSelectedSubKey(subKeys[0] ?? "");
+  }, [subKeys]);
+
+  const report = data.find((d) => {
+    const k = "country" in d ? d.country : (d as CategoryReport).category;
+    if (k !== selectedKey) return false;
+    if (reportTab === "mpc") return (d as CategoryReport).subCategory === selectedSubKey;
+    return true;
+  }) as CountryReport | undefined;
 
   const curr = reportTab === "national" ? (CURRENCY[selectedKey] ?? "€") : "€";
 
@@ -154,7 +174,7 @@ export default function ReportsClient({
         signal: ctrl.signal,
         body: JSON.stringify({
           tab: tabLabel,
-          key: selectedKey,
+          key: selectedSubKey ? `${selectedKey} (${selectedSubKey})` : selectedKey,
           months: visibleMonths,
           campaign: {
             sales: visibleMonths.map((m) => report.campaign.sales[report.months.indexOf(m)]),
@@ -228,20 +248,41 @@ export default function ReportsClient({
       {/* 국가 / 카테고리 선택 + 월 범위 */}
       {keys.length > 0 && (
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex flex-wrap gap-2">
-            {keys.map((key) => (
-              <button
-                key={key}
-                onClick={() => setSelectedKey(key)}
-                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                  selectedKey === key
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:border-blue-400"
-                }`}
-              >
-                {key}
-              </button>
-            ))}
+          <div className="flex flex-col gap-2">
+            {/* 국가 버튼 */}
+            <div className="flex flex-wrap gap-2">
+              {keys.map((key) => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedKey(key)}
+                  className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                    selectedKey === key
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:border-blue-400"
+                  }`}
+                >
+                  {key}
+                </button>
+              ))}
+            </div>
+            {/* MPC 소 카테고리 버튼 */}
+            {subKeys.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {subKeys.map((sub) => (
+                  <button
+                    key={sub}
+                    onClick={() => setSelectedSubKey(sub)}
+                    className={`px-2.5 py-1 text-xs rounded-md border transition-colors ${
+                      selectedSubKey === sub
+                        ? "bg-indigo-500 text-white border-indigo-500"
+                        : "border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:border-indigo-400"
+                    }`}
+                  >
+                    {sub}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-1.5">
             <select
