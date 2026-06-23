@@ -117,16 +117,21 @@ export default function ReportsClient({
     };
   });
 
-  const latest = report ? {
-    sales:  report.campaign.sales[0],
-    spend:  report.campaign.spend[0],
-    acos:   report.campaign.acos[0],
-    ctr:    report.campaign.ctr[0],
+  const latestMonth = visibleMonths[visibleMonths.length - 1];
+  const prevMonth   = visibleMonths[visibleMonths.length - 2];
+  const latestIdx   = latestMonth ? report!.months.indexOf(latestMonth) : -1;
+  const prevIdx     = prevMonth   ? report!.months.indexOf(prevMonth)   : -1;
+
+  const latest = latestIdx >= 0 ? {
+    sales: report!.campaign.sales[latestIdx],
+    spend: report!.campaign.spend[latestIdx],
+    acos:  report!.campaign.acos[latestIdx],
+    ctr:   report!.campaign.ctr[latestIdx],
   } : null;
 
-  const prev = report ? {
-    sales: report.campaign.sales[1],
-    spend: report.campaign.spend[1],
+  const prev = prevIdx >= 0 ? {
+    sales: report!.campaign.sales[prevIdx],
+    spend: report!.campaign.spend[prevIdx],
   } : null;
 
   const loadedTime = new Date(fetchedAt).toISOString().slice(11, 19);
@@ -342,7 +347,7 @@ export default function ReportsClient({
                   {visibleMonths.map((month) => {
                     const i = report.months.indexOf(month);
                     return (
-                      <tr key={month} className={i === 0 ? "bg-blue-50/50 dark:bg-blue-950/20 font-medium" : ""}>
+                      <tr key={month} className={month === latestMonth ? "bg-blue-50/50 dark:bg-blue-950/20 font-medium" : ""}>
                         <td className="px-4 py-2 text-neutral-700 dark:text-neutral-300">{fmtMonth(month)}</td>
                         <td className="px-4 py-2 text-right">{fmt(report.campaign.impressions[i])}</td>
                         <td className="px-4 py-2 text-right">{fmt(report.campaign.clicks[i])}</td>
