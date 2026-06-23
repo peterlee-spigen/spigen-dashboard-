@@ -51,7 +51,7 @@ ${rows}
 마크다운 형식으로 작성하세요.`;
 
   const stream = await ai.models.generateContentStream({
-    model: "gemini-2.0-flash",
+    model: "gemini-2.5-flash",
     contents: prompt,
   });
 
