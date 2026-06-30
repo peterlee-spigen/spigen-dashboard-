@@ -98,7 +98,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo / Title */}
         <div className="text-center mb-8">
-          <p className="text-xs text-neutral-400 uppercase tracking-widest mb-1">Spigen DE</p>
+          <p className="text-xs text-neutral-400 uppercase tracking-widest mb-1">Spigen Europe</p>
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
             광고 대시보드
           </h1>
